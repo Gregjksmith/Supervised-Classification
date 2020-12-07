@@ -63,6 +63,7 @@ public:
 		float expSum = 0.0f;
 		int maxClassIndex = 0;
 		float maxLabel = _ensembles[0]->label(x);
+		expSum += exp(maxLabel);
 		for (int i = 1; i < _k; i++)
 		{
 			float l = _ensembles[i]->label(x);
