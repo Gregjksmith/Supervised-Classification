@@ -274,7 +274,7 @@ float DecisionTree::informationGain(std::vector<Sample*>& samples, float* sample
 		p = p / fmax(attributeSum, 1e-9);
 		n = 1.0 - p;
 
-		float attributeEntropy = -p * log2(fmax(p, 1e-12)) - -n * log2(fmax(n, 1e-12));
+		float attributeEntropy = -p * log2(fmax(p, 1e-12)) + n * log2(fmax(n, 1e-12));
 		
 		ig -= (attributeSum / weightSum) * attributeEntropy;
 	}

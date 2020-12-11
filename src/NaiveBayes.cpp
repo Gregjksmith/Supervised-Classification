@@ -1,6 +1,7 @@
 #include <NaiveBayes.h>
 #include <cmath>
 #include <vector>
+#include <Accumulator.h>
 
 NaiveBayes::NaiveBayes() : WeakLearner()
 {
@@ -56,11 +57,11 @@ void NaiveBayes::train(std::vector<Sample*>& samples, float* sampleWeights, int 
 	//iterate through each attribute.
 	for (int j = 0; j < _n; j++)
 	{
-		float positiveMeanSum = 0.0f;
-		float negativeMeanSum = 0.0f;
+		Accumulator positiveMeanSum;
+		Accumulator negativeMeanSum;
 
-		float positiveWeightSum = 0.0f;
-		float negativeWeightSum = 0.0f;
+		Accumulator positiveWeightSum;
+		Accumulator negativeWeightSum;
 
 		//iterate through each sample to compute the means.
 		for (int i = 0; i < samples.size(); i++)
@@ -76,19 +77,16 @@ void NaiveBayes::train(std::vector<Sample*>& samples, float* sampleWeights, int 
 			else
 			{
 				negativeMeanSum += sampleWeights[i] * x->x(j);
-				negativeWeightSum += sampleWeights[i];
+				negativeWeightSum = sampleWeights[i];
 			}
 		}
 
 		//compute the means.
-		positiveMeanSum /= positiveWeightSum;
-		negativeMeanSum /= negativeWeightSum;
+		positiveMeanSum = positiveMeanSum.sum() / positiveWeightSum.sum();
+		negativeMeanSum = negativeMeanSum.sum() / negativeWeightSum.sum();
 
-		positiveWeightSum = 0.0f;
-		negativeWeightSum = 0.0f;
-
-		float positiveVarSum = 0.0f;
-		float negativeVarSum = 0.0f;
+		Accumulator positiveVarSum;
+		Accumulator negativeVarSum;
 
 		//iterate through each sample to compute the variances.s
 		for (int i = 0; i < samples.size(); i++)
@@ -97,25 +95,23 @@ void NaiveBayes::train(std::vector<Sample*>& samples, float* sampleWeights, int 
 			//compute the positive attribute variance.
 			if (x->y() == classIndex)
 			{
-				positiveVarSum += sampleWeights[i] * pow(x->x(j) - positiveMeanSum, 2.0f);
-				positiveWeightSum += sampleWeights[i];
+				positiveVarSum += sampleWeights[i] * pow(x->x(j) - positiveMeanSum.sum(), 2.0f);
 			}
 			//compute the negative attribute variance.
 			else
 			{
-				negativeVarSum += sampleWeights[i] * pow(x->x(j) - negativeMeanSum, 2.0f);
-				negativeWeightSum += sampleWeights[i];
+				negativeVarSum = sampleWeights[i] * pow(x->x(j) - negativeMeanSum.sum(), 2.0f);
 			}
 		}
 
 		//get the variances.
-		positiveVarSum /= positiveWeightSum;
-		negativeVarSum /= negativeWeightSum;
+		positiveVarSum = positiveVarSum.sum() / positiveWeightSum.sum();
+		negativeVarSum = negativeVarSum.sum() / negativeWeightSum.sum();
 
-		_mean[j * 2 + 0] = positiveMeanSum;
-		_mean[j * 2 + 1] = negativeMeanSum;
+		_mean[j * 2 + 0] = positiveMeanSum.sum();
+		_mean[j * 2 + 1] = negativeMeanSum.sum();
 
-		_var[j * 2 + 0] = fmax(positiveVarSum, 1e-5f);
-		_var[j * 2 + 1] = fmax(negativeVarSum, 1e-5f);
+		_var[j * 2 + 0] = fmax(positiveVarSum.sum(), 1e-5f);
+		_var[j * 2 + 1] = fmax(negativeVarSum.sum(), 1e-5f);
 	}
 }

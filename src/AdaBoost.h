@@ -12,6 +12,7 @@ gregjksmith@gmail.com
 #include <vector>
 #include <Sample.h>
 #include <WeakLearner.h>
+#include <Accumulator.h>
 
 template <class T>
 class AdaBoost
@@ -152,8 +153,20 @@ private:
 
 		for (int k = 0; k < _k; k++)
 		{
+			int numPositiveSamples = 0;
 			for (int i = 0; i < numSamples; i++)
-				w[i] = 1.0f / (float)numSamples;
+			{
+				if (samples[i]->y() == k)
+					numPositiveSamples++;
+			}
+			
+			for (int i = 0; i < numSamples; i++)
+			{
+				if (samples[i]->y() == k)
+					w[i] = 1.0f / (float)(numPositiveSamples * 2);
+				else
+					w[i] = 1.0f / (float)((numSamples - numPositiveSamples) * 2);
+			}
 
 			for (int wl = 0; wl < _numWeakLearners; wl++)
 			{
@@ -161,35 +174,34 @@ private:
 				WeakLearner* weakLearner = new T();
 				weakLearner->train(samples, w, k);
 
-				float error = 0.0f;
+				Accumulator errorSum;
 				for (int i = 0; i < numSamples; i++)
 				{
 					Sample* x = samples[i];
 					computedLabels[i] = weakLearner->label(x);
 					if (computedLabels[i] * binaryLabel(x->y(), k) <= 0.0f)
 					{
-						float wSample = w[i];
-						error += w[i];
+						errorSum += w[i];
 					}
 				}
-				error = fmax(error, 1e-9f);
+
 				//compute the AdaBoost ensemble weight.
-				float alpha = log((1.0f - error) / error);
+				float alpha = log((1.0f - fmax(errorSum.sum(), 1e-9f)) / fmax(errorSum.sum(), 1e-9f));
 				_ensembles[k]->addWeakLearner(weakLearner, alpha);
 
 				//recalculate the sample weights.
-				float wSum = 0.0f;
+				Accumulator weightSum;
 				for (int i = 0; i < numSamples; i++)
 				{
 					Sample* x = samples[i];
 					float wFactor = exp(-alpha * computedLabels[i] * binaryLabel(x->y(), k));
 					w[i] = w[i] * wFactor;
-					wSum += w[i];
+					weightSum += w[i];
 				}
 
 				for (int i = 0; i < numSamples; i++)
 				{
-					w[i] /= wSum;
+					w[i] /= weightSum.sum();
 				}
 			}
 		}

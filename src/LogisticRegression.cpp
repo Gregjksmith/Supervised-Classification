@@ -1,4 +1,5 @@
 #include <LogisticRegression.h>
+#include <Accumulator.h>
 
 LogisticRegression::LogisticRegression() : WeakLearner()
 {
@@ -30,78 +31,90 @@ void LogisticRegression::train(std::vector<Sample*>& samples, float* sampleWeigh
 	if (_w != nullptr)
 		delete[] _w;
 	_w = new float[vectorSize];
-	clearBuffer(_w, vectorSize);
+	for (int i = 0; i < vectorSize; i++)
+		_w[i] = 0.0f;
 	_b = 0.0f;
 
-	//create the weight root mean squared buffers.
-	float* wRms = new float[vectorSize];
-	clearBuffer(wRms, vectorSize);
-	float bRms = 0.0f;
+	//create the weight and bias buffers.
+	Accumulator* weight = new Accumulator[vectorSize];
+	Accumulator bias;
 
 	//create the gradient buffers.
-	float* dw = new float[vectorSize];
-	float db = 0.0f;
+	Accumulator* weightGradient = new Accumulator[vectorSize];
+	Accumulator biasGradient;
 
-	float cost = 0.0f;
+	//create the weight root mean squared buffers.
+	Accumulator* weightRms = new Accumulator[vectorSize];
+	Accumulator biasRms;
+
 	float averageGradient = 0.0f;
 	for (int iter = 0; iter < MAX_EPOCHS; iter++)
 	{
-		cost = 0.0f;
-		clearBuffer(dw, vectorSize);
-		db = 0.0f;
-
-		float dSum = 0.0f;
-		float weightSum = 0.0f;
-		for (int i = 0; i < numSamples; i++)
+		Accumulator cost;
+		for (int i = 0; i < vectorSize; i++)
 		{
-			Sample* sample = samples[i];
+			weightGradient[i].clear();
+			weightRms[i].clear();
+		}
+		biasGradient.clear();
+		biasRms.clear();
+
+		Accumulator weightSum;
+		Accumulator dSum;
+
+		for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
+		{
+			Sample* sample = samples[sampleIndex];
 			float sig = sigmoid(sample);
 			float y = sigmoidLabel(sample->y(), classIndex);
 
 			//compute the cross entropy loss.
 			cost += -(y * log(sig + 1e-9f) + (1.0f - y) * log(1.0f - sig + 1e-9f));
-			weightSum += sampleWeights[i];
+			weightSum += sampleWeights[sampleIndex];
 
 			//compute and accumulate the weight gradient of the sample.
-			for (int j = 0; j < vectorSize; j++)
+			for (int i = 0; i < vectorSize; i++)
 			{
-				float d = sampleWeights[i] * (sig - y) * sample->x(j);
+				float d = sampleWeights[sampleIndex] * (sig - y) * sample->x(i);
 				dSum += fabs(d);
-				dw[j] += d;
+				weightGradient[i] += d;
 			}
 			//copmute and accumulate the bias gradient of the sample.
-			db += sampleWeights[i] * (sig - y);
-			dSum += fabs(db);
+			float d = sampleWeights[sampleIndex] * (sig - y);
+			biasGradient += d;
+			dSum += fabs(d);
 		}
+
+		dSum = dSum.sum() / (weightSum.sum() * (float)(vectorSize + 1));
 
 		//normalize the gradient.
 		for (int j = 0; j < vectorSize; j++)
-			dw[j] /= weightSum;
-		db /= weightSum;
-
-		//compute the average absolute gradient.
-		dSum /= weightSum;
-		dSum /= (float)(vectorSize + 1); 
+			weightGradient[j] = weightGradient[j].sum() / weightSum.sum();
+		biasGradient = biasGradient.sum() / weightSum.sum();
 
 		//get the running gradient mean square.
 		for (int j = 0; j < vectorSize; j++)
-		{
-			wRms[j] = (RUNNING_AVERAGE_WEIGHT)*wRms[j] + (1.0f - RUNNING_AVERAGE_WEIGHT) * (dw[j] * dw[j]);
-		}
-		bRms = RUNNING_AVERAGE_WEIGHT * bRms + (1.0f - RUNNING_AVERAGE_WEIGHT) * (db * db);
+			weightRms[j] = RUNNING_AVERAGE_WEIGHT * weightRms[j].sum() + (1.0f - RUNNING_AVERAGE_WEIGHT) * pow(weightGradient[j].sum(), 2.0f);	
+		biasRms = RUNNING_AVERAGE_WEIGHT * biasRms.sum() + (1.0f - RUNNING_AVERAGE_WEIGHT) * pow(biasGradient.sum(), 2.0f);
 
 		//update the weights and bias with the adaptive learning rate
 		for (int j = 0; j < vectorSize; j++)
 		{
-			float scale = 1.0f / (sqrt(wRms[j]) + 1e-5f);
-			_w[j] -= LEARNING_RATE * dw[j] / (sqrt(wRms[j]) + 1e-5f);
+			float scale = 1.0f / (sqrt(weightRms[j].sum()) + 1e-5f);
+			weight[j] -= LEARNING_RATE * weightGradient[j].sum() / (sqrt(weightRms[j].sum()) + 1e-5f);
+			_w[j] = weight[j].sum();
 		}
-		_b -= LEARNING_RATE * db / (sqrt(bRms) + 1e-5f);
+		bias -= LEARNING_RATE * biasGradient.sum() / (sqrt(biasRms.sum()) + 1e-5f);
+		_b = bias.sum();
 
 		//if the gradient is small enough, the loss is at an optimal value.
-		if (dSum < GRADIENT_THRESH)
+		if (dSum.sum() < GRADIENT_THRESH)
 			break;
 	}
+
+	delete[] weightRms;
+	delete[] weightGradient;
+	delete[] weight;
 }
 
 float LogisticRegression::sigmoid(Sample* s)

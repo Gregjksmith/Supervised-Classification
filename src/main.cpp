@@ -57,7 +57,7 @@ void main()
 	std::vector<Sample*> samples;
 	const int numSamples = 1000;
 	const int numClasses = 10;
-	const float sampleVariance = 0.5f;
+	const float sampleVariance = 0.125f;
 	const int numWeakLearners[] = { 1,2,5 };
 	computeRandomTrainingSet(samples, numClasses, numSamples, sampleVariance);
 
