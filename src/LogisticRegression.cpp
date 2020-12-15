@@ -34,6 +34,7 @@ void LogisticRegression::train(std::vector<Sample*>& samples, float* sampleWeigh
 	for (int i = 0; i < vectorSize; i++)
 		_w[i] = 0.0f;
 	_b = 0.0f;
+	_sampleSize = vectorSize;
 
 	//create the weight and bias buffers.
 	Accumulator* weight = new Accumulator[vectorSize];
@@ -115,6 +116,27 @@ void LogisticRegression::train(std::vector<Sample*>& samples, float* sampleWeigh
 	delete[] weightRms;
 	delete[] weightGradient;
 	delete[] weight;
+}
+
+void LogisticRegression::exportInternal(std::string& params)
+{
+	params += std::to_string(_sampleSize) + WEAK_LEARNER_DELIM;
+
+	for (int i = 0; i < _sampleSize; i++)
+		params += std::to_string(_w[i]) + WEAK_LEARNER_DELIM;
+	
+	params += std::to_string(_b) + WEAK_LEARNER_DELIM;
+}
+void LogisticRegression::importInternal(std::string& params)
+{
+	_sampleSize = atoi(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+
+	_w = new float[_sampleSize];
+	for (int i = 0; i < _sampleSize; i++)
+	{
+		_w[i] = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	}
+	_b = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
 }
 
 float LogisticRegression::sigmoid(Sample* s)

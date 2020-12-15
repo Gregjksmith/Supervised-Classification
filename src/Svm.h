@@ -27,6 +27,10 @@ public:
 	virtual float label(Sample* x);
 	virtual void train(std::vector<Sample*>& samples, float* sampleWeights, int classIndex);
 
+protected:
+	virtual void exportInternal(std::string& params);
+	virtual void importInternal(std::string& params);
+
 private:
 	float* _w; //hyperplane normal	
 	float _b; //hyperplane bias

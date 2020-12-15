@@ -13,6 +13,9 @@ gregjksmith@gmail.com
 #pragma once
 #include <Sample.h>
 #include <vector>
+#include <fstream>
+#include <string>
+#include <ExportStringUtils.h>
 
 /*
 WeakLearner. Base Learner class. All supervised algorithms derive from this class.
@@ -46,9 +49,16 @@ public:
 	*/
 	virtual float error(std::vector<Sample*>& samples, int classIndex);
 
+	std::string exportParams();
+
+	void importParams(std::string& params);
+
 protected:
 	/*
 	Returns 1.0 if the two class indices match, -1.0 else.
 	*/
 	virtual float binaryLabel(int class0, int class1);
+
+	virtual void exportInternal(std::string& params) = 0;
+	virtual void importInternal(std::string& params) = 0;
 };

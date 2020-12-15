@@ -23,6 +23,10 @@ public:
 	virtual float label(Sample* x);
 	virtual void train(std::vector<Sample*>& samples, float* sampleWeights, int classIndex);
 
+protected:
+	virtual void exportInternal(std::string& params);
+	virtual void importInternal(std::string& params);
+
 private:
 
 	int _splitAttributeIndex;	//attribute index in which the decision tree is split.

@@ -42,9 +42,13 @@ protected:
 	float sigmoid(Sample* s);
 	float sigmoidLabel(int class0, int class1);
 
-	float* _w = nullptr;	//logistic weights.
-	float _b;	//logistic bias.
+	virtual void exportInternal(std::string& params);
+	virtual void importInternal(std::string& params);
 
 private:
 	void clearBuffer(float* buffer, int numSamples);
+
+	float* _w = nullptr;	//logistic weights.
+	float _b;	//logistic bias.
+	int _sampleSize;
 };

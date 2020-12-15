@@ -80,6 +80,52 @@ public:
 		return maxClassIndex;
 	}
 
+	std::string exportParams()
+	{
+		std::string params;
+		params += std::to_string(_numWeakLearners) + ENSEMBLE_DELIM;
+		params += std::to_string(_n) + ENSEMBLE_DELIM;
+		params += std::to_string(_k) + ENSEMBLE_DELIM;
+		
+		for (int k = 0; k < _k; k++)
+		{
+			for (int w = 0; w < _numWeakLearners; w++)
+			{
+				params += std::to_string(_ensembles[k]->weight(w)) + ENSEMBLE_DELIM;
+				params += _ensembles[k]->weakLearner(w)->exportParams() + ENSEMBLE_DELIM;
+			}
+		}
+		return params;
+	}
+
+	void importParams(std::string& params)
+	{
+		_numWeakLearners = atoi(getNextParam(params, ENSEMBLE_DELIM).c_str());
+		_n = atoi(getNextParam(params, ENSEMBLE_DELIM).c_str());
+		_k = atoi(getNextParam(params, ENSEMBLE_DELIM).c_str());
+
+		if (_ensembles != nullptr)
+			delete[] _ensembles;
+
+		_ensembles = new Ensemble * [_k];
+		for (int k = 0; k < _k; k++)
+			_ensembles[k] = new Ensemble();
+
+		for (int k = 0; k < _k; k++)
+		{
+			for (int w = 0; w < _numWeakLearners; w++)
+			{
+				float alpha = atof(getNextParam(params, ENSEMBLE_DELIM).c_str());
+				std::string weakLearnerParams = getNextParam(params, ENSEMBLE_DELIM);
+
+				WeakLearner* weakLearner = new T();
+				weakLearner->importParams(weakLearnerParams);
+
+				_ensembles[k]->addWeakLearner(weakLearner, alpha);
+			}
+		}
+	}
+
 private:
 
 	/*
@@ -124,6 +170,16 @@ private:
 				l += _weakLearners[i]->label(x) * _weights[i];
 			}
 			return l;
+		}
+
+		WeakLearner* weakLearner(int index)
+		{
+			return _weakLearners[index];
+		}
+
+		float weight(int index)
+		{
+			return _weights[index];
 		}
 
 	private:

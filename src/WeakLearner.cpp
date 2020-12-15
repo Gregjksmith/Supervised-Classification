@@ -14,7 +14,6 @@ gregjksmith@gmail.com
 
 WeakLearner::WeakLearner()
 {
-
 }
 
 WeakLearner::~WeakLearner()
@@ -75,4 +74,17 @@ float WeakLearner::binaryLabel(int class0, int class1)
 	if (class0 == class1)
 		return 1.0f;
 	return -1.0f;
+}
+
+std::string WeakLearner::exportParams()
+{
+	std::string params;
+	exportInternal(params);
+
+	return params;
+}
+
+void WeakLearner::importParams(std::string& params)
+{
+	importInternal(params);
 }

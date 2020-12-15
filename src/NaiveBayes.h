@@ -22,6 +22,10 @@ public:
 	virtual float label(Sample* x);
 	virtual void train(std::vector<Sample*>& samples, float* sampleWeights, int classIndex);
 
+protected:
+	virtual void exportInternal(std::string& params);
+	virtual void importInternal(std::string& params);
+
 private:
 	int _n;	//number of attributes in a sample.
 	float* _mean;	//attribute means for positive and negative samples.

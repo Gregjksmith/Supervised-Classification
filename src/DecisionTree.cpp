@@ -280,3 +280,46 @@ float DecisionTree::informationGain(std::vector<Sample*>& samples, float* sample
 	}
 	return ig;
 }
+
+void DecisionTree::exportInternal(std::string& params)
+{
+	params += std::to_string(_splitAttributeIndex) + WEAK_LEARNER_DELIM;
+	params += std::to_string(_splitThresh) + WEAK_LEARNER_DELIM;
+	params += std::to_string(_nodeLabel) + WEAK_LEARNER_DELIM;
+
+	if (_childNode[0] != nullptr)
+		params += std::to_string(1) + WEAK_LEARNER_DELIM;
+	else
+		params += std::to_string(0) + WEAK_LEARNER_DELIM;
+
+	if (_childNode[1] != nullptr)
+		params += std::to_string(1) + WEAK_LEARNER_DELIM;
+	else
+		params += std::to_string(0) + WEAK_LEARNER_DELIM;
+
+	if (_childNode[0] != nullptr)
+		_childNode[0]->exportInternal(params);
+	if(_childNode[1] != nullptr)
+		_childNode[1]->exportInternal(params);
+}
+void DecisionTree::importInternal(std::string& params)
+{
+	_splitAttributeIndex = atoi(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	_splitThresh = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	_nodeLabel = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+
+	int childNode0 = atoi(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	int childNode1 = atoi(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+
+	if (childNode0 == 1)
+	{
+		_childNode[0] = new DecisionTree();
+		_childNode[0]->importInternal(params);
+	}
+
+	if (childNode1 == 1)
+	{
+		_childNode[1] = new DecisionTree();
+		_childNode[1]->importInternal(params);
+	}
+}

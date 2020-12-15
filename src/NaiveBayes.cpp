@@ -115,3 +115,26 @@ void NaiveBayes::train(std::vector<Sample*>& samples, float* sampleWeights, int 
 		_var[j * 2 + 1] = fmax(negativeVarSum.sum(), 1e-5f);
 	}
 }
+
+void NaiveBayes::exportInternal(std::string& params)
+{
+	params += std::to_string(_n) + WEAK_LEARNER_DELIM;
+
+	for (int i = 0; i < _n * 2; i++)
+		params += std::to_string(_mean[i]) + WEAK_LEARNER_DELIM;	
+
+	for (int i = 0; i < _n * 2; i++)
+		params += std::to_string(_var[i]) + WEAK_LEARNER_DELIM;
+}
+void NaiveBayes::importInternal(std::string& params)
+{
+	_n = atoi(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	
+	_mean = new float[_n * 2];
+	for (int i = 0; i < _n * 2; i++)
+		_mean[i] = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	
+	_var = new float[_n * 2];
+	for (int i = 0; i < _n * 2; i++)
+		_var[i] = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+}

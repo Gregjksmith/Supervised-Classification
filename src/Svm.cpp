@@ -173,3 +173,25 @@ float Svm::label(Sample* x)
 	sum += _b;
 	return sum;
 }
+
+void Svm::exportInternal(std::string& params)
+{
+	params += std::to_string(_n) + WEAK_LEARNER_DELIM;
+
+	for (int i = 0; i < _n; i++)
+	{
+		params += std::to_string(_w[i]) + WEAK_LEARNER_DELIM;
+	}
+	params += std::to_string(_b) + WEAK_LEARNER_DELIM;
+}
+void Svm::importInternal(std::string& params)
+{
+	_n = atoi(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+
+	_w = new float[_n];
+	for (int i = 0; i < _n; i++)
+	{
+		_w[i] = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+	}
+	_b = atof(getNextParam(params, WEAK_LEARNER_DELIM).c_str());
+}
