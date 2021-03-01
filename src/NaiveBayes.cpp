@@ -77,7 +77,7 @@ void NaiveBayes::train(std::vector<Sample*>& samples, float* sampleWeights, int 
 			else
 			{
 				negativeMeanSum += sampleWeights[i] * x->x(j);
-				negativeWeightSum = sampleWeights[i];
+				negativeWeightSum += sampleWeights[i];
 			}
 		}
 
@@ -100,7 +100,7 @@ void NaiveBayes::train(std::vector<Sample*>& samples, float* sampleWeights, int 
 			//compute the negative attribute variance.
 			else
 			{
-				negativeVarSum = sampleWeights[i] * pow(x->x(j) - negativeMeanSum.sum(), 2.0f);
+				negativeVarSum += sampleWeights[i] * pow(x->x(j) - negativeMeanSum.sum(), 2.0f);
 			}
 		}
 
